@@ -13,7 +13,9 @@ plot(cars)
 
 ```{r references, echo=FALSE , eval=TRUE}
 1. https://www.semanticscholar.org/paper/Visual-Analytics-of-Heterogeneous-Data-Using-Xie-Zhong/5188a6dfef8b6afae290a96ea488f6c6a96371b6
-2. 
+2. https://www.semanticscholar.org/paper/'Connecting-the-dots'%3A-leveraging-visual-analytics-Ratwani-Fong/4d814bd2a50b7e12568b4ca63ec79d0a1f488354
+3. https://datacarpentry.org/R-ecology-lesson/03-dplyr.html
+
 
 ```
 
