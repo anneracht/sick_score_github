@@ -47,6 +47,13 @@ ggdensity(sick_score, x = "Age",
           color = "Gender", fill = "Gender",
           palette = c("#0073C2FF", "#FC4E07"))
 
+#density plot for BMI based on Race
+ggdensity(sick_score, x = "BMI.Surgical.Tracking",
+          add = "mean", rug = TRUE,
+          color = "ASA", fill = "ASA",
+          title = "Density Plot of BMI based on ASA",
+          palette = c("#0073C2FF", "#FC4E07"))
+
 
 #reorder the plot
 sick_score %>% count(Race) %>% mutate(Race = reorder(Race, n, desc = TRUE)) %>%
@@ -80,11 +87,29 @@ ggplot(sick_score, aes(Age)) + geom_density(aes(fill=factor(LOS)), alpha=0.8) +
 levels(sick_score$Type.of.Surgery)
 
 ggplot(sick_score, aes(Age, BMI.Surgical.Tracking))+
-  geom_raster(aes(fill = LOS))+
-  labs(title ="Heat Map", x = "Age", y = "BMI")+
+  geom_raster(aes(fill = LOS)) +
+  labs(title ="Heat Map", x = "Age", y = "BMI") +
   scale_fill_continuous(name = "length of stay")
 
-Read more at: https://www.tatvic.com/blog/7-visualizations-learn-r/?utm_source=copytext&utm_medium=text&utm_campaign=textshare
+
+ggplot(sick_score, aes(Age, BMI.Surgical.Tracking)) +
+  geom_tile(aes(fill = LOS),colour = "lightblue") + scale_fill_gradient(low = "white",high = "steelblue") +
+  labs(title ="Heat Map of Age,BMI,LOS", x = "Age", y = "BMI")
+
+#scatterplot for BMI and age
+ggplot(sick_score, aes(Age, BMI.Surgical.Tracking)) + geom_point() + labs(title ="Scatterplot : BMI vs Age")
+
+#scatterplot for BMI & age, divided based n ASA
+ggplot(sick_score, aes(Age, BMI.Surgical.Tracking)) + geom_point(aes(color = ASA)) +
+  scale_x_continuous("Age", breaks = seq(10,80,10))+
+  scale_y_continuous("BMI", breaks = seq(20,100,10))+
+  theme_bw() + labs(title="Scatterplot: BMI vs Age stratified on ASA") + facet_wrap( ~ ASA)
+
+#scatterplot for BMI & age, divided based n Race
+ggplot(sick_score, aes(Age, BMI.Surgical.Tracking)) + geom_point(aes(color = HLD)) +
+  scale_x_continuous("Age", breaks = seq(10,80,5))+
+  scale_y_continuous("BMI", breaks = seq(20,100,5))+
+  theme_bw() + labs(title="Scatterplot: BMI vs Age stratified on HLD status") + facet_wrap( ~ HLD)
 
 
 #abbreviate the Race to AA, C, LA, ME, AZN, AIAN, O
@@ -102,7 +127,49 @@ levels(sick_score$Race)[levels(sick_score$Race)=="Other"] <- "O"
 #but first, I'll convert the obvious binaries into 1 and 0 . The edited spreadsheet is still named sick_score for simplicity purpose.
 #to filter a variable column into specific level
 sick_score %>% select(Race, Type.of.Surgery) %>% filter(str_detect(Race, "African"))
-#I want to count which race gets which type of surgery
+#I want to count which race gets which type of surgery. But first I need to clean up the data on the types
+#of surgery
+str(sick_score$Type.of.Surgery, list.len = 700)
+
+#to list all the levels with these character occurrences
+grep("G*", sick_score$Type.of.Surgery, value=TRUE)
+
+sum(sick_score$Type.of.Surgery == "Gastric Sleeve") #35
+sum(sick_score$Type.of.Surgery == "Realize Band") #1
+sum(sick_score$Type.of.Surgery == "RnY") #1
+
+
+str_count(sick_score$Type.of.Surgery, "G* S*") %>% mutate(count = n())
+
+
+#list all types of surgeries
+#count all of these surgeries and mutate into a new column, and the a graph
+#sapply(unique(sick_score$Type.of.Surgery), function(x) str_count(sick_score$Type.of.Surgery,x))
+sick_score %>%
+  group_by(Type.of.Surgery, Race) %>%
+  tally()
+
+#use tally to get a glimpse of all the levels of variables , and discuss w team on what to edit later on
+#I want to count the types of surgery based on Race , and find any missing data
+sick_score %>% count(Race, Type.of.Surgery, sort = TRUE) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+
+#group race, type of surgery, and health insurance status
+sick_score %>%
+  group_by(Type.of.Surgery, Race ,Health.Insurance.Status) %>%
+  tally() %>%
+  arrange(desc(n)) %>% #arrange in descending order
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+
+#time to look at the comorbids !
+sick_score %>%
+  group_by() %>%
+  tally() %>%
+  arrange(desc(n))
 
 summary(sick_score$Health.Insurance.Status)
-levels(sick_score$Race)
+str(sick_score)
