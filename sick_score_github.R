@@ -29,7 +29,7 @@ str(sick_score)
 str(sick_score$Race)
 
 #convert all missing values ("", '') in sick_score to NA, and count the missing values
-sick_score[sick_score == ""] <- NA
+sick_score[sick_score == ""] <- "No"
 
 #count the number of missing values
 sum(is.na(sick_score))
@@ -146,7 +146,7 @@ str_count(sick_score$Type.of.Surgery, "G* S*") %>% mutate(count = n())
 #count all of these surgeries and mutate into a new column, and the a graph
 #sapply(unique(sick_score$Type.of.Surgery), function(x) str_count(sick_score$Type.of.Surgery,x))
 sick_score %>%
-  group_by(Type.of.Surgery, Race) %>%
+  group_by(Type.of.Surgery) %>%
   tally()
 
 #use tally to get a glimpse of all the levels of variables , and discuss w team on what to edit later on
@@ -158,7 +158,7 @@ sick_score %>% count(Race, Type.of.Surgery, sort = TRUE) %>%
 
 #group race, type of surgery, and health insurance status
 sick_score %>%
-  group_by(Type.of.Surgery, Race ,Health.Insurance.Status) %>%
+  group_by(Race ,Health.Insurance.Status) %>%
   tally() %>%
   arrange(desc(n)) %>% #arrange in descending order
   kable() %>%
@@ -167,9 +167,30 @@ sick_score %>%
 
 #time to look at the comorbids !
 sick_score %>%
-  group_by() %>%
+  group_by(BMI.Surgical.Tracking, OSA) %>%
   tally() %>%
-  arrange(desc(n))
+  arrange(desc(n)) %>% kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
 
 summary(sick_score$Health.Insurance.Status)
 str(sick_score)
+
+sick_score %>%
+  group_by(CAD, METs...4.listed.) %>% tally()%>% arrange(desc(n)) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+#I'm interested in seeing how much missing data there is. This has implications on study validity (both int and ext)
+sum(is.na(sick_score[20]))
+
+sick_score %>% group_by(CAD) %>% tally()
+
+colnames(sick_score[9])
+
+#clean up CVA [7]
+levels(sick_score$CVA)[levels(sick_score$CVA) == "NA" ] <- "No"
+#clean up CAD [8]. I've divided this to stress positive test with no cath, cath w/o PCI, then all PCI's. All
+#PCI's requite cath, mentioning cath with PCI together is redundancy
+levels(sick_score$CAD)[levels(sick_score$CAD) == "CathNoStent" ] <- "CathNoPCI"
+
