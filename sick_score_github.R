@@ -182,15 +182,135 @@ sick_score %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 
 #I'm interested in seeing how much missing data there is. This has implications on study validity (both int and ext)
-sum(is.na(sick_score[20]))
+sum(is.na(sick_score[21]))
 
-sick_score %>% group_by(CAD) %>% tally()
+sick_score %>% group_by(HTN.continued) %>% tally()
 
-colnames(sick_score[9])
+colnames(sick_score[34])
 
-#clean up CVA [7]
-levels(sick_score$CVA)[levels(sick_score$CVA) == "NA" ] <- "No"
-#clean up CAD [8]. I've divided this to stress positive test with no cath, cath w/o PCI, then all PCI's. All
+#clean up CVA [7] . Hx of CVA wit residu
+levels(sick_score$CVA)[levels(sick_score$CVA) == "Carotid Artery Imaging positive for stenosis" ] <- "CAI_Positive"
+#clean up CAD [9]. I've divided this to stress positive test with no cath, cath w/o PCI, then all PCI's. All
 #PCI's requite cath, mentioning cath with PCI together is redundancy
 levels(sick_score$CAD)[levels(sick_score$CAD) == "CathNoStent" ] <- "CathNoPCI"
+#clean up PVD [11]. MedsNoAngio = cilostazol without peripheral angio,
+levels(sick_score$PVD)[levels(sick_score$PVD) == "Positive Peripheral Angiogram with Angioplasty or Stent placement" ] <- "Angio_endovascular_procedure"
+#clean up CHF [12]. Curious about CHF with preserved ejection fraction category.
+levels(sick_score$CHF)[levels(sick_score$CHF) == "No CHF / Not Charted" ] <- "No"
+#clean up CHF.continued. and .continued.1 [12].
+levels(sick_score$CHF.continued)[levels(sick_score$CHF.continued) == "No BNP >500 w/o CKD" ] <- "No_BNP_No_CKD"
+levels(sick_score$CHF.continued.1)[levels(sick_score$CHF.continued.1) == "" ] <- "No"
+levels(sick_score$CHF.continued.2)[levels(sick_score$CHF.continued.2) == "History of Ventricular Tachycardia or Ventricular Fibrillation or Implanted Cardiac Device or Pacemaker in place" ] <- "VT/VF/ICD/Pacemaker"
 
+#clean up DM data. It's not the best. Is BG a range taken over a period of time or one off reading?
+#It's very different from HbA1c. For simplicity sake Im going to categorize this to no DM, controlled and uncontrolled DM
+#controlled DM = Blood Glucose (BG) 120-149 or glycated hemoglobin (HbA1C within 3mths of surgery) 6-6.9 . Beyond is uncontrolled.
+levels(sick_score$DM)[levels(sick_score$DM) == "Unontrolled_DM" ] <- "Uncontrolled_DM"
+#cleaning up hypertension data. Do LVH / end organ damage patients have meds too? Assuming they do, I'm slightly confused.
+#why do we classify HTN on meds as a category on its own.
+sick_score %>% group_by(HTN) %>% tally()
+levels(sick_score$HTN)[levels(sick_score$HTN) == "HTN_end_organ_damage" ] <- "HTN_uncontrolled"
+levels(sick_score$HTN.continued)[levels(sick_score$HTN.continued) == "Number 1 with Left Ventricular Hypertrophy (LVH) on electrocardiogram (EKG) or echocardiogram (ECHO)" ] <- "LVH"
+#cleaning up hyperlipidemia data
+sick_score %>% group_by(HLD) %>% tally()
+levels(sick_score$HLD)[levels(sick_score$HLD) == "" ] <- "No"
+#cleaning up COPD data. RVSP > 40 is classified into dilated RV with or without EF compromise.
+#PFTs suggestive of Obstructive Disease or No PFTs on Bronchodilator Therapy <- dont get it.
+sick_score %>% group_by(COPD) %>% tally()
+levels(sick_score$COPD)[levels(sick_score$COPD) == "No Bronchodilator Therapy" ] <- "No_meds"
+#clean up OSA data
+sick_score %>% group_by(OSA) %>% tally()
+levels(sick_score$OSA)[levels(sick_score$OSA) == "Positive Sleep Study/ Diagnosis of OSA - not compliant with CPAP" ] <- "CPAP_noncompliant"
+#clean up CKD data 22,23,24,25,26
+sick_score %>% group_by(CKD.continued.1) %>% tally()
+levels(sick_score$CKD)[levels(sick_score$CKD) == "No CKD / Not Charted" ] <- "No"
+levels(sick_score$CKD.continued.1)[levels(sick_score$CKD.continued.1) == "No Electrolyte abnormality" ] <- "electrolyte_normal"
+sick_score %>% group_by(CKD.continued.2) %>% tally()
+levels(sick_score$CKD.continued.2)[levels(sick_score$CKD.continued.2) == "N/A" ] <- "Not_anemic"
+sick_score %>% group_by(CKD.continued.4) %>% tally()
+levels(sick_score$CKD.continued.4)[levels(sick_score$CKD.continued.4) == "N/A" ] <- "BUN_normal"
+#clean up Liver Disease col 27. fatty_liver includes NAFLD and AFLD
+sick_score %>% group_by(Liver.Disease) %>% tally()
+levels(sick_score$Liver.Disease)[levels(sick_score$Liver.Disease) == "Cirrhosis" ] <- "cirrhosis"
+sick_score %>% group_by(Liver.Disease.other.factors.2) %>% tally()
+levels(sick_score$Liver.Disease.other.factors.1)[levels(sick_score$Liver.Disease.other.factors.1) == "Transaminitis" ] <- "transaminitis"
+#not sure about liver disease factors 2. Albumin >2 criteria? INR without anticoag, shortened to INR <1.5 or >1.5
+sick_score %>% group_by(Liver.Disease.other.factors.5) %>% tally()
+levels(sick_score$Liver.Disease.other.factors.3)[levels(sick_score$Liver.Disease.other.factors.3) == "International Normalized Ration (INR) >1.5 without concomitant Anticoagulation" ] <- "INR_1.5_above"
+levels(sick_score$Liver.Disease.other.factors.4)[levels(sick_score$Liver.Disease.other.factors.4) == "Not Charted" ] <- "no_hypoglycemia"
+#omit column 32
+#clean up alcohol history column 34.
+sick_score %>% group_by(Alcohol) %>% tally()
+levels(sick_score$Alcohol)[levels(sick_score$Alcohol) == "No history of Alcohol abuse" ] <- "No_abuse"
+#clean up tobacco info
+colnames(sick_score[35])
+sick_score %>% group_by(Tobacco) %>% tally()
+levels(sick_score$Tobacco)[levels(sick_score$Tobacco) == "Active Smoker" ] <- "Smoker"
+#clean up drug use info
+colnames(sick_score[36])
+sick_score %>% group_by(Illicit.Drug.Use) %>% tally()
+levels(sick_score$Illicit.Drug.Use)[levels(sick_score$Illicit.Drug.Use) == "History of Intravenous Drug Abuse (IVDA) without health complications" ] <- "Yes"
+# Illicit..Drug.Use , i'll tidy this up later
+colnames(sick_score[37])
+sick_score %>% group_by(Illicit..Drug.Use) %>% tally()
+# narcotic use
+colnames(sick_score[38])
+sick_score %>% group_by(Narcotic) %>% tally()
+levels(sick_score$Narcotic)[levels(sick_score$Narcotic) == "Patient on 50 -90 MME/day" ] <- "50_90_MME"
+# METS data
+colnames(sick_score[39])
+sick_score %>% group_by(METs...4.listed.) %>% tally()
+# ASA
+colnames(sick_score[40])
+sick_score %>% group_by(ASA) %>% tally()
+#city ! yay . count them. So much we can do with this data.
+colnames(sick_score[41])
+levels(sick_score$City)
+sick_score %>% count(City, sort=TRUE)
+
+#
+(sick_score[46])
+names(sick_score)[46]<-"ED.Visit.30.Day"
+
+#count the complications . Seems like ~ 7-8% had 30 day readmission for something
+levels(sick_score$ED.Visit.30.Day)
+sick_score %>% count(ED.Visit.30.Day , sort=TRUE)
+
+# ~30 patients were readmitted
+colnames(sick_score[47])
+levels(sick_score$Readmit.30.Day)
+sick_score %>% count(Readmit.30.Day , sort=TRUE)
+
+#
+colnames(sick_score[48])
+names(sick_score)[48]<-"Reoperation.30.Day"
+#types of reoperation done
+sick_score %>% count(Reoperation.30.Day , sort=TRUE)
+
+#clean up data on city. replace Eastpointe for East Pointe. Replace for Dearborn Hghts as well
+levels(sick_score$City)
+levels(sick_score$City)[levels(sick_score$City) == "Macomb" ] <- "Macomb Twp."
+
+# populate the longitude and latitude for each of the cities using a for loop
+
+
+#define the lat and long for each city
+
+for (row in 1:nrow(stock)) {
+  price <- stock[row, "apple"]
+  date  <- stock[row, "date"]
+
+  if(price > 117) {
+    print(paste("On", date,
+                "the stock price was", price))
+  }
+}
+
+
+
+
+write.csv(sick_score, file = "sick_score/sick_score_github2.csv", row.names = FALSE)
+write.csv(sick_score,"/Users/Desktop/sick_score_github.csv", row.names = FALSE)
+
+#to replace NA with No or 0
+sick_score$METs...4.listed.[is.na(sick_score$METs...4.listed.)] <- "No_METS_charted"

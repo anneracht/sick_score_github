@@ -11,22 +11,6 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 plot(cars)
 ```
 
-```{r references, echo=FALSE , eval=FALSE}
-1. https://www.semanticscholar.org/paper/Visual-Analytics-of-Heterogeneous-Data-Using-Xie-Zhong/5188a6dfef8b6afae290a96ea488f6c6a96371b6
-2. https://www.semanticscholar.org/paper/'Connecting-the-dots'%3A-leveraging-visual-analytics-Ratwani-Fong/4d814bd2a50b7e12568b4ca63ec79d0a1f488354
-3. https://datacarpentry.org/R-ecology-lesson/03-dplyr.html
-4. https://www.r-bloggers.com/density-plot-with-ggplot/
-5. https://ggplot2.tidyverse.org/reference/geom_density.html
-6. https://www.tatvic.com/blog/7-visualizations-learn-r/ 
-7. https://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html (maps and ggmaps , inner_join stuff is awesome )
-
-  
-
-
-```
-
-
-
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
