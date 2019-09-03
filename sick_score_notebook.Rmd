@@ -19,6 +19,7 @@ plot(cars)
 5. https://ggplot2.tidyverse.org/reference/geom_density.html
 6. https://www.tatvic.com/blog/7-visualizations-learn-r/ 
 7. https://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html (maps and ggmaps , inner_join stuff is awesome )
+8. https://gist.github.com/lmullen/8375785 (getting started on shapefiles, great intro!)
 
   
 

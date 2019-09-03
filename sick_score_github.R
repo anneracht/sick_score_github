@@ -185,7 +185,6 @@ sick_score %>%
 sum(is.na(sick_score[21]))
 
 sick_score %>% group_by(HTN.continued) %>% tally()
-
 colnames(sick_score[34])
 
 #clean up CVA [7] . Hx of CVA wit residu
@@ -292,22 +291,222 @@ levels(sick_score$City)
 levels(sick_score$City)[levels(sick_score$City) == "Macomb" ] <- "Macomb Twp."
 
 # populate the longitude and latitude for each of the cities using a for loop
+sick_score_geo <- sick_score %>% mutate(lat = row_number(), long = row_number())
+levels(sick_score_geo$City)[levels(sick_score_geo$City) == "Macomb" ] <- "Macomb Twp."
+levels(sick_score_geo$City)[levels(sick_score_geo$City) == "Port Huron" ] <- "Port Huron Twp."
+levels(sick_score_geo$City)[levels(sick_score_geo$City) == "Port Huron" ] <- "Port Huron Twp."
+levels(sick_score_geo$City)[levels(sick_score_geo$City) == "Farmington Hills" ] <- "Farmington"
+levels(sick_score_geo$City)[levels(sick_score_geo$City) == "Rochester Hills" ] <- "Rochester"
 
+lat
 
-#define the lat and long for each city
+levels(sick_score_geo$City)
 
-for (row in 1:nrow(stock)) {
-  price <- stock[row, "apple"]
-  date  <- stock[row, "date"]
-
-  if(price > 117) {
-    print(paste("On", date,
-                "the stock price was", price))
+#for loop for LATTITUDE
+   for(i in seq_along(sick_score_geo))
+    {
+    if(isTRUE(sick_score_geo$City[i] == "Ypsilanti")){
+      sick_score_geo$lat[i] <- paste0(42.240794)
+    }
   }
-}
+
+  #for loop for LONGITUDE
+  for(i in seq_along(sick_score_geo))
+  {
+    if(isTRUE(sick_score_geo$City[i] == "Ypsilanti")){
+      sick_score_geo$long[i] <- paste0(-83.613090)
+    }
+  }
+
+#so the above didnt work. I've downloaded all the zipcodes for michigan
+latlong_mi # has all the zipcodes , deleted column study names. ready for cbind
+sick_score_geo <- cbind(sick_score, latlong_mi)
+view(sick_score_geo)
+
+#time to visualize on leaflet
+library(leaflet)
+sick_score_geo %>% select(City, lat, long) %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(clusterOption=markerClusterOptions())
+
+
+#make a chloropeth map
+library(ggplot2)
+library(ggmap)
+library(maps)
+library(mapdata)
+
+usa <- map_data("usa") # we already did this, but we can do it again
+ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group = group)) +
+  coord_fixed(1.5)
+
+states <- map_data("state")
+
+ggplot(data = states) +
+  geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") +
+  coord_fixed(1.3) +
+  guides(fill=FALSE)
+
+
+michigan <- subset(states, region %in% c("michigan","illinois", "ohio", "indiana"))
+ggplot(data = michigan) +
+  geom_polygon(aes(x = long, y = lat, group=group), fill = "palegreen", color = "black") + coord_fixed(1.3)
+
+#zoom in on michigan
+mi_df <- subset(states, region == "michigan")
+head(mi_df)
+counties <- map_data("county")
+mi_county <- subset(counties, region == "michigan")
+head(mi_county)
+
+mi_base <- ggplot(data = mi_df, mapping = aes(x = long, y = lat, group = group)) +
+  coord_fixed(1.3) +
+  geom_polygon(color = "black", fill = "gray") +
+  geom_polygon(data = mi_county, fill = NA, color = "white") +
+  geom_polygon(color = "black", fill = NA)
+
+
+mi_base + theme_nothing()
+
+mi_base + theme_nothing() +
+  geom_polygon(data = mi_county, fill = NA, color = "white") +
+  geom_polygon(color = "black", fill = NA)  # get the state border back on top
+
+
+ditch_the_axes <- theme(
+  axis.text = element_blank(),
+  axis.line = element_blank(),
+  axis.ticks = element_blank(),
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  axis.title = element_blank(),
+  legend. = element_blank()
+)
+
+sick_score_geo <- sick_score_geo %>%
+  mutate(group = City)
+
+testing <- sick_score_geo %>%
+  count(City, sort=TRUE) %>%
+  mutate(group = row_number())
+
+
+sick_score_geo %>%
+select(City, long, lat) %>%
+  group_by(City) %>%
+  mutate(sums = tally(City))
+
+#Group works !!!
+group <- sick_score_geo %>% select(City, long, lat) %>% mutate(group = as.integer(factor(City))) %>%
+   select(-City, -long, -lat)
+
+#I've finally grouped cities together!!
+sick_score_geo %>% select (City, group) %>% count(City)
+
+subset_sick_score <- sick_score_geo %>% select(City, long, lat, group, LOS)
+
+mi_map <- mi_base +  ditch_the_axes + geom_polygon(color = "black", fill = NA) + theme_bw() +
+  geom_polygon(data = sick_score_geo, aes( fill = City), color = "white", show.legend = TRUE)
+
+mi_map + scale_fill_gradient(trans = "log10")
+
+ggplot() +geom_polygon(data = sick_score_geo,
+               aes(x = long, y = lat, group = group, fill = City),
+               color = "black", size = 0.25) +
+  coord_map()
+
+#using shape file and OGR
+require(rgdal)
+require(ggplot2)
+
+shapefile <- readOGR("/Users/annet/Desktop/Programmingstuff/sick_score/mi_counties", "Counties_v17a")
+
+# Next the shapefile has to be converted to a dataframe for use in ggplot2
+shapefile_df <- fortify(shapefile)
+
+# Now the shapefile can be plotted as either a geom_path or a geom_polygon.
+# Paths handle clipping better. Polygons can be filled.
+# You need the aesthetics long, lat, and group.
+mi_map <- ggplot() +
+  geom_path(data = shapefile_df,
+            aes(x = long, y = lat, group = group),
+            color = 'gray', fill = 'white', size = .2)
 
 
 
+# Basic choropleth with leaflet?
+mypalette <- colorNumeric( palette="viridis", domain=(sick_score_geo$City), na.color="transparent")
+mypalette(c(45,43))
+
+#clean up data!
+sickscorecity <- as.numeric(as.character(sick_score_geo$City))
+
+m <- leaflet(shapefile) %>%
+  addTiles()  %>%
+  setView( lat= 44, lng=-84 , zoom=6) %>%
+  addPolygons(stroke=FALSE, fill = 'white', fillColor = ~mypalette(as.numeric(sick_score_geo$City)))
+
+# Color by quantile
+m1 <- leaflet(shapefile) %>%
+  addTiles()  %>%
+  setView( lat= 44, lng=-84 , zoom=6) %>%
+  addPolygons(stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5, color = ~colorBin("YlOrRd", sickscorecity)(sickscorecity))
+
+
+# Distribution of data per city? good to plot this first
+sick_score_geo %>%
+  ggplot( aes(x=as.numeric(City))) +
+  geom_histogram(bins=20, fill='#69b3a2', color='white') +
+  xlab("Population (M)") +
+  theme_bw()
+
+# Create a color palette with handmade bins.
+library(RColorBrewer)
+mybins <- c(0,10,20,50,100,500,Inf)
+mypalette <- colorBin( palette="YlOrBr", domain=sick_score_geo$City, na.color="transparent", bins=mybins)
+
+# Prepare the text for tooltips:
+mytext <- paste(
+  "Country: ", sick_score_geo$City,"<br/>",
+  "Area: ", sick_score_geo$City, "<br/>",
+  "Population: ", round(y, 2),
+  sep="") %>%
+  lapply(htmltools::HTML)
+
+# Final Map
+leaflet(shapefile) %>%
+  addTiles()  %>%
+  setView( lat= 44, lng=-84 , zoom=6) %>%
+  addPolygons(
+    fillColor = ~mypalette(as.numeric(sick_score_geo$City)),
+    stroke=TRUE,
+    fillOpacity = 0.9,
+    color="white",
+    weight=0.3,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "13px",
+      direction = "auto"
+    )
+  ) %>%
+  addLegend( pal=mypalette, values=~as.numeric(sick_score_geo$City), opacity=0.9, title = "Distribution of Diabetes Type 5", position = "bottomright" )
+
+
+
+# save the widget in a html file if needed.
+# library(htmlwidgets)
+# saveWidget(m, file=paste0( getwd(), "/HtmlWidget/choroplethLeaflet1.html"))
+#source = https://www.r-graph-gallery.com/183-choropleth-map-with-leaflet.html
+
+#bubble chart
+library(plotly)
+sick_score
+
+
+###
+if(!requireNamespace("devtools")) install.packages("devtools")
+devtools::install_github("dkahle/ggmap", ref = "tidyup", force=TRUE)
 
 write.csv(sick_score, file = "sick_score/sick_score_github2.csv", row.names = FALSE)
 write.csv(sick_score,"/Users/Desktop/sick_score_github.csv", row.names = FALSE)

@@ -3,12 +3,96 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+```{r library, eval=TRUE, echo=FALSE}
+library(dplyr)
+library(tibble)
+library(tidyr)
+library(magrittr)
+library(ggplot2)
+library(reshape2)
+library(tm)
+library(base)
+library(stringr)
+library(RColorBrewer)
+library(purrr)
+library(stringr)
+library(ggpubr)
+library(leaflet)
+library(ggplot2)
+library(ggmap)
+library(maps)
+library(mapdata)
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
 
-```{r}
-plot(cars)
+require(gdata)
+```
+
+```{r sick_score, eval=TRUE, echo=TRUE}
+df = read.xls(("sick_score_xls.xls"), sheet = 1, header = TRUE)
+sick_score <- rename(df)
+sick_score <- data.frame(sick_score, stringsAsFactors = FALSE)
+#abbreviate the Race to AA, C, LA, ME, AZN, AIAN, O
+levels(sick_score$Race)[levels(sick_score$Race)=="A Indian/Alaskan Native"] <- "AIAN"
+levels(sick_score$Race)[levels(sick_score$Race)=="African American"] <- "AA"
+levels(sick_score$Race)[levels(sick_score$Race)=="Asian"] <- "AZN"
+levels(sick_score$Race)[levels(sick_score$Race)=="Caucasian"] <- "C"
+levels(sick_score$Race)[levels(sick_score$Race)=="latin American"] <- "LA"  #I repeated this for latin and Latin
+levels(sick_score$Race)[levels(sick_score$Race)=="Middle Eastern"] <- "ME"
+levels(sick_score$Race)[levels(sick_score$Race)=="Other"] <- "O"
+```
+
+```{r sick_score_map , eval=TRUE, echo=FALSE}
+usa <- map_data("usa") # we already did this, but we can do it again
+ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group = group)) +
+  coord_fixed(1.5)
+
+states <- map_data("state")
+
+ggplot(data = states) +
+  geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") +
+  coord_fixed(1.3) +
+  guides(fill=FALSE)
+
+
+michigan <- subset(states, region %in% c("michigan","illinois", "ohio", "indiana"))
+ggplot(data = michigan) +
+  geom_polygon(aes(x = long, y = lat, group=group), fill = "palegreen", color = "black") + coord_fixed(1.3)
+
+#zoom in on michigan
+mi_df <- subset(states, region == "michigan")
+head(mi_df)
+counties <- map_data("county")
+mi_county <- subset(counties, region == "michigan")
+head(mi_county)
+
+mi_base <- ggplot(data = mi_df, mapping = aes(x = long, y = lat, group = group)) +
+  coord_fixed(1.3) +
+  geom_polygon(color = "black", fill = "gray") +
+  geom_polygon(data = mi_county, fill = NA, color = "white") +
+  geom_polygon(color = "black", fill = NA)
+
+
+mi_base + theme_nothing()
+
+mi_base + theme_nothing() +
+  geom_polygon(data = mi_county, fill = NA, color = "white") +
+  geom_polygon(color = "black", fill = NA)  # get the state border back on top
+
+
+ditch_the_axes <- theme(
+  axis.text = element_blank(),
+  axis.line = element_blank(),
+  axis.ticks = element_blank(),
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  axis.title = element_blank()
+)
+group <- sick_score_geo %>% select(City, long, lat) %>% mutate(group = as.integer(factor(City))) %>%
+   select(-City, -long, -lat)
+
+mi_map <- mi_base +  ditch_the_axes + geom_polygon(color = "black", fill = NA) + theme_bw() +
+  geom_polygon(data = subset_sick_score, aes( fill = City), color = "white", show.legend = FALSE)
+
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
