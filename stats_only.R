@@ -66,8 +66,22 @@ ss_comorbidity[ss_comorbidity== "NA" ] <- 0
 replace(ss_comorbidity, is.na(ss_comorbidity), 0)
 ss_comorbidity[!ss_comorbidity== 0 ] <- 1
 ss_comorbidity[is.na(ss_comorbidity)] <- 0
+library(data.table)
+ss_comorbidity <- as.matrix(ss_comorbidity, fill = T)
 
+ss_comorbidity_df <- as.data.frame(ss_comorbidity, stringsAsFactors = FALSE)
 #comorbidity network of co-occurrences
+ss_comorbidity_df
+
+ss_comorbidity[,1:16]
+
+dat <- ss_comorbidity[,1:16]
+## character to numeric
+## factor to numeric
+
+temp <- t(as.matrix(ss_comorbidity)) %*% as.matrix(ss_comorbidity)
+
+crossprod()
 
 #reference
 #http://www.medsci.org/v13p0099.htm#T3
