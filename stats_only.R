@@ -62,26 +62,39 @@ sss$ASA <- NULL
 ss_comorbidity <- as.matrix(sss)
 
 # Matrix multiplication for cooccurrence counts
-ss_comorbidity[ss_comorbidity== "NA" ] <- 0
+#convert the dataframe to boolean matrix
+ss_comorbidity[ss_comorbidity== "NA" ] <- as.numeric(0)
 replace(ss_comorbidity, is.na(ss_comorbidity), 0)
-ss_comorbidity[!ss_comorbidity== 0 ] <- 1
+ss_comorbidity[ss_comorbidity>=1] <- 1
 ss_comorbidity[is.na(ss_comorbidity)] <- 0
-library(data.table)
 ss_comorbidity <- as.matrix(ss_comorbidity, fill = T)
 
 ss_comorbidity_df <- as.data.frame(ss_comorbidity, stringsAsFactors = FALSE)
+#convert to matrix and numeric
+ss_comorbidity_1 <- as.matrix(ss_comorbidity_df)
+head(ss_comorbidity_1)
+#check if matrix contents are character, and convert it to numeric
+is.character(ss_comorbidity_1)
+class(ss_comorbidity_1) <- "numeric"
+head(ss_comorbidity_1)
+
+ss_comorbidity_cor <- t(ss_comorbidity_1) %*% ss_comorbidity_1
+
+
+#heatmap(ss_comorbidity_cor)
+temp = sapply(colnames(ss_comorbidity), function(x)
+  sapply(colnames(ss_comorbidity), function(y)
+    sum(rowSums(ss_comorbidity_1[,c(x, y)]) == 2)))
+
+
+
 #comorbidity network of co-occurrences
 ss_comorbidity_df
-
 ss_comorbidity[,1:16]
-
 dat <- ss_comorbidity[,1:16]
-## character to numeric
-## factor to numeric
+cor(ss_comorbidity_1)
 
-temp <- t(as.matrix(ss_comorbidity)) %*% as.matrix(ss_comorbidity)
 
-crossprod()
 
 #reference
 #http://www.medsci.org/v13p0099.htm#T3
