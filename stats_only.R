@@ -79,6 +79,8 @@ class(ss_comorbidity_1) <- "numeric"
 head(ss_comorbidity_1)
 
 ss_comorbidity_cor <- t(ss_comorbidity_1) %*% ss_comorbidity_1
+diag(ss_comorbidity_cor) <- 0
+heatmap(ss_comorbidity_cor, Rowv = NA, Colv = NA)
 
 
 #heatmap(ss_comorbidity_cor)
