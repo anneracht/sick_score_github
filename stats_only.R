@@ -79,15 +79,57 @@ class(ss_comorbidity_1) <- "numeric"
 head(ss_comorbidity_1)
 
 ss_comorbidity_cor <- t(ss_comorbidity_1) %*% ss_comorbidity_1
+comorbid_counts <- ss_comorbidity_cor %>% kable() %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"), font_size = 15)
+
+
+
 diag(ss_comorbidity_cor) <- 0
 heatmap(ss_comorbidity_cor, Rowv = NA, Colv = NA)
 
+library(dplyr)
+library(kableExtra)
+cor(ss_comorbidity_cor, method = c("spearman")) %>% kable() %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+
+mydata.cor <- cor(ss_comorbidity_cor, method = c("spearman"))
+
+#generate p-values (source: https://www.displayr.com/how-to-create-a-correlation-matrix-in-r/)
+install.packages("Hmisc")
+library("Hmisc")
+
+mydata.rcorr = rcorr(as.matrix(ss_comorbidity_cor))
+mydata.rcorr
+mydata.coeff = mydata.rcorr$r
+mydata.p = mydata.rcorr$P
+
+mydata.p %>% kable() %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+
+library(corrplot)
+corrplot(mydata.cor)
+palette = colorRampPalette(c("green", "white", "red")) (20)
+heatmap(x = ss_comorbidity_cor, col = palette, symm = TRUE)
+
+
+palette = colorRampPalette(c("green", "white", "red")) (20)
+heatmap(x = mydata.cor, col = palette, symm = TRUE)
+
 
 #heatmap(ss_comorbidity_cor)
-temp = sapply(colnames(ss_comorbidity), function(x)
-  sapply(colnames(ss_comorbidity), function(y)
-    sum(rowSums(ss_comorbidity_1[,c(x, y)]) == 2)))
+temp = sapply(colnames(ss_comorbidity_cor), function(x)
+  sapply(colnames(ss_comorbidity_cor), function(y)
+    sum(rowSums(ss_comorbidity_cor[,c(x, y)]) == 2)))
+diag(temp) = 0
+temp
+library(reshape2)
+library(ggplot2)
 
+df1 = melt(temp)
+
+graphics.off()
+ggplot(df1, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile() +
+  theme_classic()
 
 
 #comorbidity network of co-occurrences
